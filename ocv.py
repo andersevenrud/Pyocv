@@ -62,6 +62,12 @@ def CVCloneImage(frame):
     cv.Copy(frame, img)
     return img
 
+def CVResizeImage(frame, size):
+    """Clone, resize and return given frame"""
+    img = cv.CreateImage(size, cv.IPL_DEPTH_8U, frame.nChannels)
+    cv.Resize(frame, img)
+    return img
+
 def CVCopyGrayscale(frame):
     """Copy frame and convert to GrayScale"""
     img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, 1)

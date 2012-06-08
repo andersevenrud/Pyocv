@@ -142,10 +142,7 @@ class ResultsWindow(ocv.CVWindow):
 
     def render(self, frame = None):
         # We want a bigger preview
-        img = cv.CreateImage((800, 600), cv.IPL_DEPTH_8U, frame.nChannels)
-        if frame is not None:
-            cv.Resize(frame, img)
-
+        img = ocv.CVResizeImage(frame, (800, 600))
         ocv.CVWindow.render(self, img)
 
 # Class: SettingsWindow
@@ -164,8 +161,7 @@ class SettingsWindow(ocv.CVWindow):
 
     def render(self, frame):
         # We want a smaller preview
-        img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
-        cv.Resize(frame, img)
+        img = ocv.CVResizeImage(frame, (320, 240))
         ocv.CVWindow.render(self, img)
 
 # ########################################################################### #
