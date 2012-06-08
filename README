@@ -1,8 +1,18 @@
 PyOCV - Python OpenCV
 -------------------------------------------------------------------------------
-Simple python library to handle tracking and detection via OpenCV.
+Simple Python Library to handle image manipulation, object detection and
+text detection.
 
-Example, run: `./main.py`
+Features:
+* Window and Settings Managment
+* Image Adjustments (Brightness, Contrast, Modes etc.)
+* Histograms
+* Misc OpenCV helper functions
+
+Configuration:
+See `config.py`
+
+To run the Example Application, run `./main.py`
 
 Dependencies:
 -------------------------------------------------------------------------------
