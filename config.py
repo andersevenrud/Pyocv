@@ -12,6 +12,8 @@ import os
 DEFAULT_LANGUAGE    = "nor"
 DEFAULT_TMP         = os.getcwd()
 DEFAULT_DEV         = 0
+DEFAULT_DEV_WIDTH   = 640
+DEFAULT_DEV_HEIGHT  = 480
 DEFAULT_FLIP        = 0
 DEFAULT_TYPE        = 3
 DEFAULT_THRESHOLD   = 128

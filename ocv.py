@@ -149,7 +149,7 @@ class CVApplication:
 #
 class CVCapture:
 
-    def __init__(self, id=0, width=640, height=480):
+    def __init__(self, id=0, width=DEFAULT_DEV_WIDTH, height=DEFAULT_DEV_HEIGHT):
         """Create a new OpenCV Capture Device"""
         self.capture = cv.CreateCameraCapture(id)
         cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FRAME_WIDTH, width)
