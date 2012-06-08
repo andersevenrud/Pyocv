@@ -29,7 +29,6 @@ class Tracker(ocv.CVApplication):
         self.capture      = ocv.CVCapture(capture_id)
 
         self.win_capture  = CaptureWindow()
-        self.win_output   = OutputWindow()
         self.win_result   = ResultsWindow()
         self.win_settings = SettingsWindow()
 
@@ -37,8 +36,7 @@ class Tracker(ocv.CVApplication):
 
     def handle(self, frame, settings):
         """Handle Frame Manipulation"""
-        img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, 1)
-        cv.CvtColor(frame, img, cv.CV_RGB2GRAY)
+        img = ocv.CVCopyGrayscale(frame)
         try:
             cv.Threshold(img, img, settings["Threshold"], 255, settings["Type"]);
         except:
@@ -71,15 +69,15 @@ class Tracker(ocv.CVApplication):
                 result = self.detect_text(img)
                 print "<<< DONE"
             elif k == 102: # f
-                print ">>> Detecting Face..."
-                result = self.detect_face(img)
+                print ">>> Detecting Object(s)..."
+                result = self.detect_objects(img, opts["Haarcascade"])
                 print "<<< DONE"
 
             # Render Output
             self.win_capture.render(frame)
-            self.win_output.render(img)
             if result is not None:
                 self.win_result.render(result)
+            self.win_settings.render(img)
 
 
         self.stop()
@@ -99,14 +97,14 @@ class Tracker(ocv.CVApplication):
 
         return img
 
-    def detect_face(self, frame):
-        """Detect face in given frame, return image with result"""
+    def detect_objects(self, frame, haar):
+        """Detect objects in given frame, return image with result"""
         img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
-        face = ocv.CVFaces(frame, self.storage)
+        objects = ocv.CVObjects(frame, self.storage, HAARS[haar])
 
         ocv.CVClear(img)
-        if face:
-            cv.Resize(face, img)
+        if objects:
+            cv.Resize(objects, img)
 
         return img
 
@@ -117,7 +115,7 @@ class Tracker(ocv.CVApplication):
 # Class: CaptureWindow
 class CaptureWindow(ocv.CVWindow):
     def __init__(self):
-        ocv.CVWindow.__init__(self, "Capture Device", 0, 0)
+        ocv.CVWindow.__init__(self, "Capture Device", 950, 0)
 
     def render(self, frame):
         # We want a smaller preview
@@ -125,31 +123,43 @@ class CaptureWindow(ocv.CVWindow):
         cv.Resize(frame, img)
         ocv.CVWindow.render(self, img)
 
-# Class: OutputWindow
-class OutputWindow(ocv.CVWindow):
-    def __init__(self):
-        ocv.CVWindow.__init__(self, "Output", 330, 0)
-
 # Class: ResultsWindow
 class ResultsWindow(ocv.CVWindow):
     def __init__(self):
-        ocv.CVWindow.__init__(self, "Results", 0, 265)
+        ocv.CVWindow.__init__(self, "Results", 0, 0, 800, 600)
+
+    def render(self, frame = None):
+        # We want a smaller preview
+        img = cv.CreateImage((800, 600), cv.IPL_DEPTH_8U, frame.nChannels)
+        if frame is not None:
+            cv.Resize(frame, img)
+
+        ocv.CVWindow.render(self, img)
 
 # Class: SettingsWindow
 class SettingsWindow(ocv.CVWindow):
     def __init__(self):
-        ocv.CVWindow.__init__(self, "Settings", 0, 530)
+        ocv.CVWindow.__init__(self, "Settings", 950, 270)
 
-        self.createTrackbar("Flip", DEFAULT_FLIP, 1)
-        self.createTrackbar("Type", DEFAULT_TYPE, 4)
-        self.createTrackbar("Threshold", DEFAULT_THRESHOLD, 255)
-        self.createTrackbar("Equalize", DEFAULT_EQUALIZE, 1)
-        self.createTrackbar("Pagesegmode", DEFAULT_PSM, 10)
+        self.createTrackbar("Flip",         DEFAULT_FLIP,       1)
+        self.createTrackbar("Type",         DEFAULT_TYPE,       4)
+        self.createTrackbar("Threshold",    DEFAULT_THRESHOLD,  255)
+        self.createTrackbar("Equalize",     DEFAULT_EQUALIZE,   1)
+        self.createTrackbar("Pagesegmode",  DEFAULT_PSM,        10)
+        self.createTrackbar("Haarcascade",  DEFAULT_HAAR,       9)
+
+    def render(self, frame):
+        # We want a smaller preview
+        img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
+        cv.Resize(frame, img)
+        ocv.CVWindow.render(self, img)
 
 # ########################################################################### #
 # MAIN                                                                        #
 # ########################################################################### #
+
 if __name__ == "__main__":
     app = Tracker(DEFAULT_TMP, DEFAULT_DEV)
-    print "Press 'q' to quit, 'c' to capture text, 'f' to detect face..."
+    print "Press 'q' to quit, 'c' to capture text, 'f' to detect object(s)..."
     app.run()
+

@@ -10,20 +10,28 @@
 import cv
 import os
 
+from config import *
+
 # ########################################################################### #
 # FUNCTIONS                                                                   #
 # ########################################################################### #
+
+def CVCopyGrayscale(frame):
+    """Copy frame and convert to GrayScale"""
+    img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, 1)
+    cv.CvtColor(frame, img, cv.CV_RGB2GRAY)
+    return img
 
 def CVClear(frame):
     """Clear a Frame"""
     cv.Set(frame, (0, 0, 0));
 
-def CVFaces(frame, storage, haar = 'haarcascade_frontalface_alt.xml'):
-    """Read Faces from Frame"""
-    cascade = cv.Load(haar)
-    faces = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, 0, (20, 20))
-    if faces:
-        for ((x, y, w, h), n) in faces:
+def CVObjects(frame, storage, haar):
+    """Read Objects from Frame"""
+    cascade = cv.Load("%s/%s.%s" % (HAAR_PATH, haar, "xml"))
+    objects = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, 0, (20, 20))
+    if objects:
+        for ((x, y, w, h), n) in objects:
             return cv.GetSubRect(frame, (x, y, w, h))
 
     return None
@@ -46,7 +54,7 @@ def CVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
 
     return img
 
-def CVReadText(frame, name, out, psm = 3):
+def CVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
     """Read Text From Image"""
     data = None
 
@@ -54,7 +62,9 @@ def CVReadText(frame, name, out, psm = 3):
     cv.SaveImage(name, frame);
     if os.path.isfile(name):
         # Detect text
+        #cmd = "tesseract -psm %d -lang %s %s %s" % (psm, lang, name, out)
         cmd = "tesseract -psm %d %s %s" % (psm, name, out)
+        print "Executing '%s'" % cmd
         os.system(cmd)
         out += ".txt"
         if os.path.isfile(out):
@@ -104,20 +114,25 @@ class CVCapture:
     def poll(self, flip = False):
         """Get a frame from device"""
         frame = cv.QueryFrame(self.capture)
-        img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
-        cv.Copy(frame, img)
+        #img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
+        #cv.Copy(frame, img)
         if flip:
-            cv.Flip(img, None, 1)
-        return img
+            cv.Flip(frame, None, 1)
+        return frame
 
 #
 # Class: CVWindow -- OpenCV Window Abstraction
 #
 class CVWindow:
 
-    def __init__(self, name, x = -1, y = -1):
+    def __init__(self, name, x = -1, y = -1, w = None, h = None):
       """Create OpenCV Window"""
-      cv.NamedWindow(name, cv.CV_WINDOW_AUTOSIZE)
+
+      if w is not None and h is not None:
+          cv.NamedWindow(name, 0)
+          cv.ResizeWindow(name, w, h)
+      else:
+          cv.NamedWindow(name, cv.CV_WINDOW_AUTOSIZE)
 
       if x != -1 and y != -1:
           cv.MoveWindow(name, x, y)
