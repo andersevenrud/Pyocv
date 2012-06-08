@@ -18,28 +18,28 @@ from config import *
 # ########################################################################### #
 
 def CVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
-  """Create a histogram of given frame"""
-  if frame.nChannels != 1:
-      dest = CVCopyGrayscale(frame)
-  else:
-      dest = frame
+    """Create a histogram of given frame"""
+    if frame.nChannels != 1:
+        dest = CVCopyGrayscale(frame)
+    else:
+        dest = frame
 
-  hist_image = cv.CreateImage((dest.width, dest.height), 8, 1)
-  hist = cv.CreateHist([hist_size], cv.CV_HIST_ARRAY, ranges, 1)
+    hist_image = cv.CreateImage((dest.width, dest.height), 8, 1)
+    hist = cv.CreateHist([hist_size], cv.CV_HIST_ARRAY, ranges, 1)
 
-  cv.CalcArrHist([dest], hist)
-  (min_value, max_value, _, _) = cv.GetMinMaxHistValue(hist)
-  cv.Scale(hist.bins, hist.bins, float(hist_image.height) / max_value, 0)
+    cv.CalcArrHist([dest], hist)
+    (min_value, max_value, _, _) = cv.GetMinMaxHistValue(hist)
+    cv.Scale(hist.bins, hist.bins, float(hist_image.height) / max_value, 0)
 
-  cv.Set(hist_image, cv.ScalarAll(255))
-  bin_w = round(float(hist_image.width) / hist_size)
+    cv.Set(hist_image, cv.ScalarAll(255))
+    bin_w = round(float(hist_image.width) / hist_size)
 
-  for i in range(hist_size):
-      cv.Rectangle(hist_image, (int(i * bin_w), hist_image.height),
-          (int((i + 1) * bin_w), hist_image.height - cv.Round(hist.bins[i])),
-          cv.ScalarAll(0), -1, 8, 0)
+    for i in range(hist_size):
+        cv.Rectangle(hist_image, (int(i * bin_w), hist_image.height),
+            (int((i + 1) * bin_w), hist_image.height - cv.Round(hist.bins[i])),
+            cv.ScalarAll(0), -1, 8, 0)
 
-  return hist_image
+    return hist_image
 
 def CVBrightnessContrast(frame, contrast, brightness):
     """Set brightness / contrast of given frame. Values from 0 to 200"""
