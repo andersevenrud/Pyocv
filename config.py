@@ -23,6 +23,7 @@ DEFAULT_HAAR        = 4
 DEFAULT_BRIGHTNESS  = 0
 DEFAULT_CONTRAST    = 0
 HAAR_PATH           = "/usr/share/opencv/haarcascades"
+TESSERACT_BIN       = "tesseract"
 
 HAARS = [
   "haarcascade_lowerbody",

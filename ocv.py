@@ -108,7 +108,7 @@ def CVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
     cv.SaveImage(name, frame);
     if os.path.isfile(name):
         # Detect text
-        args = ['tesseract', '-psm', str(psm), str(name), str(out)]
+        args = [TESSERACT_BIN, '-psm', str(psm), str(name), str(out)]
         print "Executing: %s" % (((" ").join(args)))
         cmdout = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
         if os.path.isfile(out + ".txt"):
