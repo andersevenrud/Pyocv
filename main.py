@@ -63,6 +63,8 @@ class Tracker(ocv.CVApplication):
             # Capture Frame(s)
             opts  = self.win_settings.settings
             frame = self.capture.poll(opts["Flip"])
+            detect = 0
+
             result = None
             if frame is None:
                 break
@@ -74,10 +76,10 @@ class Tracker(ocv.CVApplication):
                 break
             elif k == 99: # c
                 print ">>> Detecting Text..."
-                result = self.detect_text(img)
+                detect = 1
             elif k == 102: # f
                 print ">>> Detecting Object(s)..."
-                result = self.detect_objects(img, opts["Haarcascade"])
+                detect = 2
             elif k == 116: # t
                 capture_mode += 1
                 if capture_mode > 1:
@@ -102,6 +104,11 @@ class Tracker(ocv.CVApplication):
                 img = self.handle(frame, opts, capture_bw)
             else:
                 img = ocv.CVCloneImage(frame)
+
+            if detect == 1:
+                result = self.detect_text(img)
+            elif detect == 2:
+                result = self.detect_objects(img, opts["Haarcascade"])
 
             if capture_mode == 0:
                 self.win_settings.render(img)
@@ -141,7 +148,9 @@ class Tracker(ocv.CVApplication):
                 br = (x + int(w*0.9), y + int(h*0.87))
                 cv.Rectangle(img, tl, br, (0, 255, 0), 3)
 
-        return img
+            return img
+
+        return None
 
 # ########################################################################### #
 # WINDOWS                                                                     #
@@ -154,8 +163,9 @@ class ResultsWindow(ocv.CVWindow):
 
     def render(self, frame = None):
         # We want a bigger preview
-        img = ocv.CVResizeImage(frame, (800, 600))
-        ocv.CVWindow.render(self, img)
+        if frame is not None:
+            img = ocv.CVResizeImage(frame, (800, 600))
+            ocv.CVWindow.render(self, img)
 
 # Class: SettingsWindow
 class SettingsWindow(ocv.CVWindow):
