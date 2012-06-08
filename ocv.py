@@ -16,6 +16,21 @@ from config import *
 # FUNCTIONS                                                                   #
 # ########################################################################### #
 
+def CVBrightnessContrast(frame, contrast, brightness):
+    """Set brightness / contrast of given frame"""
+    # The algorithm is by Werner D. Streidt
+    # (http://visca.com/ffactory/archives/5-99/msg00021.html)
+    if contrast > 0:
+        delta = 127. * contrast / 100
+        a = 255. / (255. - delta * 2)
+        b = a * (brightness - delta)
+    else:
+        delta = -128. * contrast / 100
+        a = (256. - delta * 2) / 255.
+        b = a * brightness + delta
+
+    cv.ConvertScale(frame, frame, a, b)
+
 def CVCopyGrayscale(frame):
     """Copy frame and convert to GrayScale"""
     img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, 1)
