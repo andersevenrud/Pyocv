@@ -76,11 +76,11 @@ def CVObjects(frame, storage, haar):
     """Read Objects from Frame"""
     cascade = cv.Load("%s/%s.%s" % (HAAR_PATH, haar, "xml"))
     objects = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, 0, (20, 20))
-    if objects:
-        for ((x, y, w, h), n) in objects:
-            return cv.GetSubRect(frame, (x, y, w, h))
-
-    return None
+    return objects
+    #if objects:
+    #    for ((x, y, w, h), n) in objects:
+    #        return cv.GetSubRect(frame, (x, y, w, h))
+    #return None
 
 def CVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
     """Apply text to an image"""
@@ -108,7 +108,9 @@ def CVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
     cv.SaveImage(name, frame);
     if os.path.isfile(name):
         # Detect text
-        cmdout = subprocess.Popen(['tesseract', '-psm', str(psm), str(name), str(out)], stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+        args = ['tesseract', '-psm', str(psm), str(name), str(out)]
+        print "Executing: %s" % (((" ").join(args)))
+        cmdout = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
         if os.path.isfile(out + ".txt"):
             # Store result
             data = open(out + ".txt", 'r').read()

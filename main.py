@@ -108,6 +108,7 @@ class Tracker(ocv.CVApplication):
 
         psm = self.win_settings.settings["Pagesegmode"]
         data = ocv.CVReadText(frame, self.path_img, self.path_txt, psm)
+        pprint.pprint(data)
         if data is None:
             data = "Empty..."
 
@@ -119,12 +120,14 @@ class Tracker(ocv.CVApplication):
 
     def detect_objects(self, frame, haar):
         """Detect objects in given frame, return image with result"""
-        img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
+        img = ocv.CVCloneImage(frame)
         objects = ocv.CVObjects(frame, self.storage, HAARS[haar])
 
-        ocv.CVClear(img)
         if objects:
-            cv.Resize(objects, img)
+            for ((x, y, w, h), n) in objects:
+                tl = (x + int(w*0.1), y + int(h*0.07))
+                br = (x + int(w*0.9), y + int(h*0.87))
+                cv.Rectangle(img, tl, br, (0, 255, 0), 3)
 
         return img
 
@@ -138,7 +141,7 @@ class ResultsWindow(ocv.CVWindow):
         ocv.CVWindow.__init__(self, "Results", 0, 0, 800, 600)
 
     def render(self, frame = None):
-        # We want a smaller preview
+        # We want a bigger preview
         img = cv.CreateImage((800, 600), cv.IPL_DEPTH_8U, frame.nChannels)
         if frame is not None:
             cv.Resize(frame, img)
