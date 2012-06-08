@@ -33,16 +33,20 @@ class Tracker(ocv.CVApplication):
 
         ocv.CVApplication.__init__(self)
 
-    def handle(self, frame, settings):
+    def handle(self, frame, settings, bw):
         """Handle Frame Manipulation"""
-        img = ocv.CVCopyGrayscale(frame)
-        try:
-            cv.Threshold(img, img, settings["Threshold"], 255, settings["Type"]);
-        except:
-            pass
+        if bw:
+            img = ocv.CVCopyGrayscale(frame)
+            try:
+                cv.Threshold(img, img, settings["Threshold"], 255, settings["Type"]);
+            except:
+                pass
 
-        if settings["Equalize"]:
-            cv.EqualizeHist(img, img)
+            if settings["Equalize"]:
+                cv.EqualizeHist(img, img)
+
+        else:
+            img = ocv.CVCloneImage(frame)
 
         ocv.CVBrightnessContrast(img, settings["Contrast"], settings["Brightness"]);
 
@@ -52,6 +56,7 @@ class Tracker(ocv.CVApplication):
         """Main Loop"""
         capture_mode = 0
         capture_modify = True
+        capture_bw = True
 
         while 1:
             # Capture Frame(s)
@@ -60,11 +65,6 @@ class Tracker(ocv.CVApplication):
             result = None
             if frame is None:
                 break
-
-            if capture_modify:
-                img = self.handle(frame, opts)
-            else:
-                img = ocv.CVCloneImage(frame)
 
             # Keyboard Handling
             k = cv.WaitKey(10)
@@ -90,6 +90,17 @@ class Tracker(ocv.CVApplication):
                     print ">>> Showing: Modified"
                 else:
                     print ">>> Showing: Original"
+            elif k == 100: # d
+                capture_bw = not capture_bw
+                if capture_bw:
+                    print ">>> B&W: True"
+                else:
+                    print ">>> B&W: False"
+
+            if capture_modify:
+                img = self.handle(frame, opts, capture_bw)
+            else:
+                img = ocv.CVCloneImage(frame)
 
             if capture_mode == 0:
                 self.win_settings.render(img)
@@ -177,6 +188,7 @@ Press q - To quit
       f - Capture Object
       t - Toggle Preview Mode (Capture/Histogram)
       m - Toggle Image Modification (On/Off)
+      d - Toggle B&W (Type/Threshold/Equalize)
 
 """
 
