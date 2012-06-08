@@ -50,7 +50,9 @@ class Tracker(ocv.CVApplication):
 
     def run(self):
         """Main Loop"""
-        capture_toggled = False
+        capture_mode = 0
+        capture_modify = True
+
         while 1:
             # Capture Frame(s)
             opts  = self.win_settings.settings
@@ -59,7 +61,10 @@ class Tracker(ocv.CVApplication):
             if frame is None:
                 break
 
-            img = self.handle(frame, opts)
+            if capture_modify:
+                img = self.handle(frame, opts)
+            else:
+                img = ocv.CVCloneImage(frame)
 
             # Keyboard Handling
             k = cv.WaitKey(10)
@@ -75,18 +80,27 @@ class Tracker(ocv.CVApplication):
                 result = self.detect_objects(img, opts["Haarcascade"])
                 print "<<< DONE"
             elif k == 116: # t
-                capture_toggled = not capture_toggled
+                capture_mode += 1
+                if capture_mode > 1:
+                    capture_mode = 0
 
-            # Render Output
-            if capture_toggled:
-                self.win_settings.render(frame)
-            else:
+                mode = ((["Modified", "Original"])[capture_mode])
+                print ">>> Mode: %d - %s" % (capture_mode, mode)
+            elif k == 109: # m
+                capture_modify = not capture_modify
+                if capture_modify:
+                    print ">>> Showing: Modified"
+                else:
+                    print ">>> Showing: Original"
+
+            if capture_mode == 0:
                 self.win_settings.render(img)
+            elif capture_mode == 1:
+                hist = ocv.CVHistogram(img)
+                self.win_settings.render(hist)
 
             if result is not None:
                 self.win_result.render(result)
-
-
 
         self.stop()
 
@@ -164,7 +178,8 @@ if __name__ == "__main__":
 Press q - To quit
       c - Capture Text
       f - Capture Object
-      t - Toggle Capture/Image in view
+      t - Toggle Preview Mode (Capture/Histogram)
+      m - Toggle Image Modification (On/Off)
 
 """
 
