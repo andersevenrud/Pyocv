@@ -16,8 +16,32 @@ from config import *
 # FUNCTIONS                                                                   #
 # ########################################################################### #
 
+def CVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
+  """Create a histogram of given frame"""
+  if frame.nChannels != 1:
+      dest = CVCopyGrayscale(frame)
+  else:
+      dest = frame
+
+  hist_image = cv.CreateImage((dest.width, dest.height), 8, 1)
+  hist = cv.CreateHist([hist_size], cv.CV_HIST_ARRAY, ranges, 1)
+
+  cv.CalcArrHist([dest], hist)
+  (min_value, max_value, _, _) = cv.GetMinMaxHistValue(hist)
+  cv.Scale(hist.bins, hist.bins, float(hist_image.height) / max_value, 0)
+
+  cv.Set(hist_image, cv.ScalarAll(255))
+  bin_w = round(float(hist_image.width) / hist_size)
+
+  for i in range(hist_size):
+      cv.Rectangle(hist_image, (int(i * bin_w), hist_image.height),
+          (int((i + 1) * bin_w), hist_image.height - cv.Round(hist.bins[i])),
+          cv.ScalarAll(0), -1, 8, 0)
+
+  return hist_image
+
 def CVBrightnessContrast(frame, contrast, brightness):
-    """Set brightness / contrast of given frame"""
+    """Set brightness / contrast of given frame. Values from 0 to 200"""
     # The algorithm is by Werner D. Streidt
     # (http://visca.com/ffactory/archives/5-99/msg00021.html)
     if contrast > 0:
@@ -30,6 +54,12 @@ def CVBrightnessContrast(frame, contrast, brightness):
         b = a * brightness + delta
 
     cv.ConvertScale(frame, frame, a, b)
+
+def CVCloneImage(frame):
+    """Clone and return given frame"""
+    img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
+    cv.Copy(frame, img)
+    return img
 
 def CVCopyGrayscale(frame):
     """Copy frame and convert to GrayScale"""
@@ -129,8 +159,6 @@ class CVCapture:
     def poll(self, flip = False):
         """Get a frame from device"""
         frame = cv.QueryFrame(self.capture)
-        #img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
-        #cv.Copy(frame, img)
         if flip:
             cv.Flip(frame, None, 1)
         return frame
