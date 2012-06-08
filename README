@@ -9,3 +9,8 @@ Dependencies:
 * Python 2+
 * OpenCV Development Libraries (+ dependencies)
 * Tesseract for text-detection
+
+Links:
+-------------------------------------------------------------------------------
+Blog: http://anderse.wordpress.com/2012/06/08/playing-with-opencv-and-tesseract/
+GitHub: https://github.com/andersevenrud/Pyocv
