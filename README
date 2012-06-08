@@ -1,0 +1,11 @@
+PyOCV - Python OpenCV
+-------------------------------------------------------------------------------
+Simple python library to handle tracking and detection via OpenCV.
+
+Example, run: `./main.py`
+
+Dependencies:
+-------------------------------------------------------------------------------
+* Python 2+
+* OpenCV Development Libraries (+ dependencies)
+* Tesseract for text-detection
