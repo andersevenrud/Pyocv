@@ -74,11 +74,9 @@ class Tracker(ocv.CVApplication):
             elif k == 99: # c
                 print ">>> Detecting Text..."
                 result = self.detect_text(img)
-                print "<<< DONE"
             elif k == 102: # f
                 print ">>> Detecting Object(s)..."
                 result = self.detect_objects(img, opts["Haarcascade"])
-                print "<<< DONE"
             elif k == 116: # t
                 capture_mode += 1
                 if capture_mode > 1:

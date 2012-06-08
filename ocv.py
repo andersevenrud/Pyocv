@@ -9,6 +9,7 @@
 
 import cv
 import os
+import subprocess
 
 from config import *
 
@@ -107,16 +108,13 @@ def CVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
     cv.SaveImage(name, frame);
     if os.path.isfile(name):
         # Detect text
-        #cmd = "tesseract -psm %d -lang %s %s %s" % (psm, lang, name, out)
-        cmd = "tesseract -psm %d %s %s" % (psm, name, out)
-        print "Executing '%s'" % cmd
-        os.system(cmd)
-        out += ".txt"
-        if os.path.isfile(out):
+        cmdout = subprocess.Popen(['tesseract', '-psm', str(psm), str(name), str(out)], stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
+        if os.path.isfile(out + ".txt"):
             # Store result
-            data = open(out, 'r').read()
+            data = open(out + ".txt", 'r').read()
             if not data.strip():
                 data = None
+
     return data
 
 # ########################################################################### #
