@@ -190,10 +190,16 @@ class CVWindow:
         except:
             pass
 
-    def createTrackbar(self, name, val = 0, maxval = 255):
+    def createTrackbar(self, name, val = 0, maxval = 255, callback = None):
         """Insert a new Trackbar"""
+
+        if callback is None:
+            def callback(name, a):
+                pass
+
         def wrapper(a):
             self.handleTrackbarEvent(name, a)
+            callback(name, a)
 
         cv.CreateTrackbar(name, self.name, val, maxval, wrapper)
         wrapper(val)
