@@ -37,6 +37,10 @@ class Tracker(ocv.CVApplication):
         """Handle Frame Manipulation"""
         if bw:
             img = ocv.CVCopyGrayscale(frame)
+        else:
+            img = ocv.CVCloneImage(frame)
+
+        if bw:
             try:
                 cv.Threshold(img, img, settings["Threshold"], 255, settings["Type"]);
             except:
@@ -44,9 +48,6 @@ class Tracker(ocv.CVApplication):
 
             if settings["Equalize"]:
                 cv.EqualizeHist(img, img)
-
-        else:
-            img = ocv.CVCloneImage(frame)
 
         ocv.CVBrightnessContrast(img, settings["Contrast"], settings["Brightness"]);
 
