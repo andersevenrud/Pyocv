@@ -17,10 +17,10 @@ from config import *
 # FUNCTIONS                                                                   #
 # ########################################################################### #
 
-def CVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
+def OCVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
     """Create a histogram of given frame"""
     if frame.nChannels != 1:
-        dest = CVCopyGrayscale(frame)
+        dest = OCVCopyGrayscale(frame)
     else:
         dest = frame
 
@@ -41,7 +41,7 @@ def CVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
 
     return hist_image
 
-def CVBrightnessContrast(frame, contrast, brightness):
+def OCVBrightnessContrast(frame, contrast, brightness):
     """Set brightness / contrast of given frame. Values from 0 to 200"""
     # The algorithm is by Werner D. Streidt
     # (http://visca.com/ffactory/archives/5-99/msg00021.html)
@@ -56,29 +56,29 @@ def CVBrightnessContrast(frame, contrast, brightness):
 
     cv.ConvertScale(frame, frame, a, b)
 
-def CVCloneImage(frame):
+def OCVCloneImage(frame):
     """Clone and return given frame"""
     img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
     cv.Copy(frame, img)
     return img
 
-def CVResizeImage(frame, size):
+def OCVResizeImage(frame, size):
     """Clone, resize and return given frame"""
     img = cv.CreateImage(size, cv.IPL_DEPTH_8U, frame.nChannels)
     cv.Resize(frame, img)
     return img
 
-def CVCopyGrayscale(frame):
+def OCVCopyGrayscale(frame):
     """Copy frame and convert to GrayScale"""
     img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, 1)
     cv.CvtColor(frame, img, cv.CV_RGB2GRAY)
     return img
 
-def CVClear(frame):
+def OCVClear(frame):
     """Clear a Frame"""
     cv.Set(frame, (0, 0, 0));
 
-def CVObjects(frame, storage, haar):
+def OCVObjects(frame, storage, haar):
     """Read Objects from Frame"""
     cascade = cv.Load("%s/%s.%s" % (HAAR_PATH, haar, "xml"))
     objects = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, 0, (20, 20))
@@ -88,7 +88,7 @@ def CVObjects(frame, storage, haar):
     #        return cv.GetSubRect(frame, (x, y, w, h))
     #return None
 
-def CVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
+def OCVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
     """Apply text to an image"""
     img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
 
@@ -96,7 +96,7 @@ def CVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
         font = cv.InitFont(cv.CV_FONT_HERSHEY_PLAIN, 0.9, 0.9, 0, 1, 1)
 
     if clear:
-        CVClear(img)
+        OCVClear(img)
 
     for i in text.split("\n"):
         i = i.strip()
@@ -106,7 +106,7 @@ def CVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
 
     return img
 
-def CVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
+def OCVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
     """Read Text From Image"""
     data = None
 
@@ -132,7 +132,7 @@ def CVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
 #
 # Class: CVApplication -- OpenCV Default Application
 #
-class CVApplication:
+class OCVApplication:
 
     def __init__(self, id=0):
         """Create a new OpenCV Application"""
@@ -153,7 +153,7 @@ class CVApplication:
 #
 # Class: CVCapture -- OpenCV Capture Device Instance
 #
-class CVCapture:
+class OCVCapture:
 
     def __init__(self, id=0, width=DEFAULT_DEV_WIDTH, height=DEFAULT_DEV_HEIGHT):
         """Create a new OpenCV Capture Device"""
@@ -172,7 +172,7 @@ class CVCapture:
 #
 # Class: CVWindow -- OpenCV Window Abstraction
 #
-class CVWindow:
+class OCVWindow:
 
     def __init__(self, name, x = -1, y = -1, w = None, h = None):
       """Create OpenCV Window"""

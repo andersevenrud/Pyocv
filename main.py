@@ -12,7 +12,7 @@ import cv
 import pprint
 
 # Locals
-import ocv
+from ocv import *
 from config import *
 
 # ########################################################################### #
@@ -20,25 +20,25 @@ from config import *
 # ########################################################################### #
 
 # Class: Tracker
-class Tracker(ocv.CVApplication):
+class Tracker(OCVApplication):
 
     def __init__(self, path, capture_id = 0):
         self.path_img     = "%s/_output.jpg" % path
         self.path_txt     = "%s/_output" % path
 
-        self.capture      = ocv.CVCapture(capture_id)
+        self.capture      = OCVCapture(capture_id)
 
         self.win_result   = ResultsWindow()
         self.win_settings = SettingsWindow()
 
-        ocv.CVApplication.__init__(self)
+        OCVApplication.__init__(self)
 
     def handle(self, frame, settings, bw):
         """Handle Frame Manipulation"""
         if bw:
-            img = ocv.CVCopyGrayscale(frame)
+            img = OCVCopyGrayscale(frame)
         else:
-            img = ocv.CVCloneImage(frame)
+            img = OCVCloneImage(frame)
 
         if bw:
             try:
@@ -49,7 +49,7 @@ class Tracker(ocv.CVApplication):
             if settings["Equalize"]:
                 cv.EqualizeHist(img, img)
 
-        ocv.CVBrightnessContrast(img, settings["Contrast"], settings["Brightness"]);
+        OCVBrightnessContrast(img, settings["Contrast"], settings["Brightness"]);
 
         return img
 
@@ -103,7 +103,7 @@ class Tracker(ocv.CVApplication):
             if capture_modify:
                 img = self.handle(frame, opts, capture_bw)
             else:
-                img = ocv.CVCloneImage(frame)
+                img = OCVCloneImage(frame)
 
             if detect == 1:
                 result = self.detect_text(img)
@@ -113,7 +113,7 @@ class Tracker(ocv.CVApplication):
             if capture_mode == 0:
                 self.win_settings.render(img)
             elif capture_mode == 1:
-                hist = ocv.CVHistogram(img)
+                hist = OCVHistogram(img)
                 self.win_settings.render(hist)
 
             if result is not None:
@@ -126,12 +126,12 @@ class Tracker(ocv.CVApplication):
         img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
 
         psm = self.win_settings.settings["Pagesegmode"]
-        data = ocv.CVReadText(frame, self.path_img, self.path_txt, psm)
+        data = OCVReadText(frame, self.path_img, self.path_txt, psm)
         pprint.pprint(data)
         if data is None:
             data = "Empty..."
 
-        result = ocv.CVText(img, data, 10, 15, 15, self.font, True)
+        result = OCVText(img, data, 10, 15, 15, self.font, True)
 
         cv.Copy(result, img)
 
@@ -139,8 +139,8 @@ class Tracker(ocv.CVApplication):
 
     def detect_objects(self, frame, haar):
         """Detect objects in given frame, return image with result"""
-        img = ocv.CVCloneImage(frame)
-        objects = ocv.CVObjects(frame, self.storage, HAARS[haar])
+        img = OCVCloneImage(frame)
+        objects = OCVObjects(frame, self.storage, HAARS[haar])
 
         if objects:
             for ((x, y, w, h), n) in objects:
@@ -157,20 +157,20 @@ class Tracker(ocv.CVApplication):
 # ########################################################################### #
 
 # Class: ResultsWindow
-class ResultsWindow(ocv.CVWindow):
+class ResultsWindow(OCVWindow):
     def __init__(self):
-        ocv.CVWindow.__init__(self, "Results", 0, 0, 800, 600)
+        OCVWindow.__init__(self, "Results", 0, 0, 800, 600)
 
     def render(self, frame = None):
         # We want a bigger preview
         if frame is not None:
-            img = ocv.CVResizeImage(frame, (800, 600))
-            ocv.CVWindow.render(self, img)
+            img = OCVResizeImage(frame, (800, 600))
+            OCVWindow.render(self, img)
 
 # Class: SettingsWindow
-class SettingsWindow(ocv.CVWindow):
+class SettingsWindow(OCVWindow):
     def __init__(self):
-        ocv.CVWindow.__init__(self, "Settings", 950, 0)
+        OCVWindow.__init__(self, "Settings", 950, 0)
 
         self.createTrackbar("Flip",         DEFAULT_FLIP,       1)
         self.createTrackbar("Type",         DEFAULT_TYPE,       4)
@@ -183,8 +183,8 @@ class SettingsWindow(ocv.CVWindow):
 
     def render(self, frame):
         # We want a smaller preview
-        img = ocv.CVResizeImage(frame, (320, 240))
-        ocv.CVWindow.render(self, img)
+        img = OCVResizeImage(frame, (320, 240))
+        OCVWindow.render(self, img)
 
 # ########################################################################### #
 # MAIN                                                                        #

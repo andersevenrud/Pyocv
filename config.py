@@ -11,7 +11,7 @@ import os
 # Default Settings
 DEFAULT_LANGUAGE    = "nor"
 DEFAULT_TMP         = os.getcwd()
-DEFAULT_DEV         = 0
+DEFAULT_DEV         = 1
 DEFAULT_DEV_WIDTH   = 640
 DEFAULT_DEV_HEIGHT  = 480
 DEFAULT_FLIP        = 0
