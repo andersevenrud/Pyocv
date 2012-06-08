@@ -175,26 +175,26 @@ class OCVCapture:
 class OCVWindow:
 
     def __init__(self, name, x = -1, y = -1, w = None, h = None):
-      """Create OpenCV Window"""
+        """Create OpenCV Window"""
 
-      if w is not None and h is not None:
-          cv.NamedWindow(name, 0)
-          cv.ResizeWindow(name, w, h)
-      else:
-          cv.NamedWindow(name, cv.CV_WINDOW_AUTOSIZE)
+        if w is not None and h is not None:
+            cv.NamedWindow(name, 0)
+            cv.ResizeWindow(name, w, h)
+        else:
+            cv.NamedWindow(name, cv.CV_WINDOW_AUTOSIZE)
 
-      if x != -1 and y != -1:
-          cv.MoveWindow(name, x, y)
+        if x != -1 and y != -1:
+            cv.MoveWindow(name, x, y)
 
-      self.name     = name
-      self.settings = {}
+        self.name     = name
+        self.settings = {}
 
-    def __del__(self):
-        """Remove OpenCV Window"""
-        try:
-            cv.DestroyWindow(self.name)
-        except:
-            pass
+      def __del__(self):
+          """Remove OpenCV Window"""
+          try:
+              cv.DestroyWindow(self.name)
+          except:
+              pass
 
     def createTrackbar(self, name, val = 0, maxval = 255, callback = None):
         """Insert a new Trackbar"""
