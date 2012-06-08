@@ -9,16 +9,18 @@
 import os
 
 # Default Settings
-DEFAULT_LANGUAGE  = "nor"
-DEFAULT_TMP       = os.getcwd()
-DEFAULT_DEV       = 1
-DEFAULT_FLIP      = 0
-DEFAULT_TYPE      = 3
-DEFAULT_THRESHOLD = 128
-DEFAULT_EQUALIZE  = 0
-DEFAULT_PSM       = 3
-DEFAULT_HAAR      = 4
-HAAR_PATH         = "/usr/share/opencv/haarcascades"
+DEFAULT_LANGUAGE    = "nor"
+DEFAULT_TMP         = os.getcwd()
+DEFAULT_DEV         = 0
+DEFAULT_FLIP        = 0
+DEFAULT_TYPE        = 3
+DEFAULT_THRESHOLD   = 128
+DEFAULT_EQUALIZE    = 0
+DEFAULT_PSM         = 3
+DEFAULT_HAAR        = 4
+DEFAULT_BRIGHTNESS  = 0
+DEFAULT_CONTRAST    = 0
+HAAR_PATH           = "/usr/share/opencv/haarcascades"
 
 HAARS = [
   "haarcascade_lowerbody",
@@ -43,3 +45,4 @@ HAARS = [
   "haarcascade_eye_tree_eyeglasses",
   "haarcascade_frontalface_alt"
 ]
+

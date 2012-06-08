@@ -28,7 +28,6 @@ class Tracker(ocv.CVApplication):
 
         self.capture      = ocv.CVCapture(capture_id)
 
-        self.win_capture  = CaptureWindow()
         self.win_result   = ResultsWindow()
         self.win_settings = SettingsWindow()
 
@@ -45,10 +44,13 @@ class Tracker(ocv.CVApplication):
         if settings["Equalize"]:
             cv.EqualizeHist(img, img)
 
+        ocv.CVBrightnessContrast(img, settings["Contrast"], settings["Brightness"]);
+
         return img
 
     def run(self):
         """Main Loop"""
+        capture_toggled = False
         while 1:
             # Capture Frame(s)
             opts  = self.win_settings.settings
@@ -72,12 +74,18 @@ class Tracker(ocv.CVApplication):
                 print ">>> Detecting Object(s)..."
                 result = self.detect_objects(img, opts["Haarcascade"])
                 print "<<< DONE"
+            elif k == 116: # t
+                capture_toggled = not capture_toggled
 
             # Render Output
-            self.win_capture.render(frame)
+            if capture_toggled:
+                self.win_settings.render(frame)
+            else:
+                self.win_settings.render(img)
+
             if result is not None:
                 self.win_result.render(result)
-            self.win_settings.render(img)
+
 
 
         self.stop()
@@ -112,17 +120,6 @@ class Tracker(ocv.CVApplication):
 # WINDOWS                                                                     #
 # ########################################################################### #
 
-# Class: CaptureWindow
-class CaptureWindow(ocv.CVWindow):
-    def __init__(self):
-        ocv.CVWindow.__init__(self, "Capture Device", 950, 0)
-
-    def render(self, frame):
-        # We want a smaller preview
-        img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
-        cv.Resize(frame, img)
-        ocv.CVWindow.render(self, img)
-
 # Class: ResultsWindow
 class ResultsWindow(ocv.CVWindow):
     def __init__(self):
@@ -139,7 +136,7 @@ class ResultsWindow(ocv.CVWindow):
 # Class: SettingsWindow
 class SettingsWindow(ocv.CVWindow):
     def __init__(self):
-        ocv.CVWindow.__init__(self, "Settings", 950, 270)
+        ocv.CVWindow.__init__(self, "Settings", 950, 0)
 
         self.createTrackbar("Flip",         DEFAULT_FLIP,       1)
         self.createTrackbar("Type",         DEFAULT_TYPE,       4)
@@ -147,6 +144,8 @@ class SettingsWindow(ocv.CVWindow):
         self.createTrackbar("Equalize",     DEFAULT_EQUALIZE,   1)
         self.createTrackbar("Pagesegmode",  DEFAULT_PSM,        10)
         self.createTrackbar("Haarcascade",  DEFAULT_HAAR,       9)
+        self.createTrackbar("Brightness",   DEFAULT_BRIGHTNESS, 200)
+        self.createTrackbar("Contrast",     DEFAULT_CONTRAST,   200)
 
     def render(self, frame):
         # We want a smaller preview
@@ -160,6 +159,14 @@ class SettingsWindow(ocv.CVWindow):
 
 if __name__ == "__main__":
     app = Tracker(DEFAULT_TMP, DEFAULT_DEV)
-    print "Press 'q' to quit, 'c' to capture text, 'f' to detect object(s)..."
+    print """PyOCV Example
+
+Press q - To quit
+      c - Capture Text
+      f - Capture Object
+      t - Toggle Capture/Image in view
+
+"""
+
     app.run()
 
