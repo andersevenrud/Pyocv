@@ -189,12 +189,12 @@ class OCVWindow:
         self.name     = name
         self.settings = {}
 
-      def __del__(self):
-          """Remove OpenCV Window"""
-          try:
-              cv.DestroyWindow(self.name)
-          except:
-              pass
+    def __del__(self):
+        """Remove OpenCV Window"""
+        try:
+            cv.DestroyWindow(self.name)
+        except:
+            pass
 
     def createTrackbar(self, name, val = 0, maxval = 255, callback = None):
         """Insert a new Trackbar"""
