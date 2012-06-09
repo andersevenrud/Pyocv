@@ -239,9 +239,17 @@ class OCVImage:
         self.size     = (self.width, self.height)
         self.font     = None
 
+    # MISC
+
     def clone(self):
         """Clone image and return new instance"""
         return OCVImage(self.frame)
+
+    def save(self, path):
+        """Save the image to given path/filename"""
+        cv.SaveImage(path, self.frame);
+
+    # MANIPULATION
 
     def clear(self, color = (0, 0, 0)):
         """Clear frame to given color"""
@@ -261,19 +269,23 @@ class OCVImage:
         self.height = img.height
         self.size   = (self.width, self.height)
 
-    def monochrome(self, depth = None):
-        """Convert image to grayscale/monochrome"""
-        if depth is None:
-            depth = self.depth
+    def mode(self, channels = 1):
+        """Convert image to given number of channels"""
+        if self.channels != channels:
+            if channels == 1:
+                self.frame    = OCVCopyGrayscale(self.frame)
+                self.channels = self.frame.nChannels
+                self.depth    = self.frame.depth
 
-        if self.channels != 1:
-            self.frame    = OCVCopyGrayscale(self.frame)
-            self.channels = self.frame.nChannels
-            self.depth    = self.frame.depth
-
-            return True
+                return True
 
         return False
+
+    def equalize(self):
+        """Equalize frame"""
+        cv.EqualizeHist(self.frame, self.frame)
+
+    # RENDER
 
     def text(self, text, x = 0, y = 0, step = 15, font = None):
         """Draw text on image (Font will be stored and used by default until changed)"""
@@ -285,16 +297,41 @@ class OCVImage:
 
         self.frame = OCVText(self.frame, text, x, y, step, self.font)
 
-    def detect(self, storage, haar):
+    def line(self, p1, p2, color = (0, 255, 0), border = 1, line = 8):
+        """Draw a line"""
+        shift = 0
+        cv.Line(self.frame, p1, p2, color, border, line, shift)
+
+    def rect(self, x, y, w, h, color = (0, 255, 0), line = 3):
+        """Draw a rectangle on the image"""
+        tl = (x + w, y + h)
+        br = (x + w, y + h)
+        cv.Rectangle(self.frame, tl, br, color, border)
+
+    def circle(self, dx, dy, radius, color = (0, 255, 0), border = -1, line = 8):
+        """Draw a circle on image"""
+        self.ellipse(dx, dy, radius, radius, color, border, line)
+
+    def ellipse(self, dx, dy, width, height, color = (0, 255, 0), border = -1, line = 8):
+        """Draw a ellipse on image"""
+        rotation = 0
+        start_angle = 0
+        stop_angle = 360
+        shift = 0
+
+        cv.Ellipse(self.frame,
+            cv.cvPoint (dx, dy),
+            cv.cvSize(width, height),
+            rotation, start_angle, stop_angle, color, border, line, shift)
+
+    # GETTERS
+
+    def getDetectableObjects(self, storage, haar):
         """Detect object(s) with given HAAR"""
         return OCVObjects(self.frame, storage, haar)
 
-    def read(self, **ka):
+    def getDetectableText(self, **ka):
         return OCVReadText(**ka)
-
-    def save(self, path):
-        """Save the image to given path/filename"""
-        cv.SaveImage(path, self.frame);
 
     def getSection(self, x, y, w, h, instance = False):
         """Get a section of the image with given envelope (can return new OCVImage() instance"""
@@ -303,6 +340,8 @@ class OCVImage:
             return OCVImage(img)
 
         return img
+
+    # SETTERS
 
     def setThreshold(self, threshold, type, max = 255):
         """Set threshold"""
