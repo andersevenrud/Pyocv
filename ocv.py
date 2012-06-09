@@ -58,25 +58,25 @@ def OCVBrightnessContrast(frame, contrast, brightness):
 
 def OCVCloneImage(frame):
     """Clone and return given frame"""
-    img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
+    img = cv.CreateImage((frame.width, frame.height), frame.depth, frame.nChannels)
     cv.Copy(frame, img)
     return img
 
 def OCVResizeImage(frame, size):
     """Clone, resize and return given frame"""
-    img = cv.CreateImage(size, cv.IPL_DEPTH_8U, frame.nChannels)
+    img = cv.CreateImage(size, frame.depth, frame.nChannels)
     cv.Resize(frame, img)
     return img
 
 def OCVCopyGrayscale(frame):
     """Copy frame and convert to GrayScale"""
-    img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, 1)
+    img = cv.CreateImage((frame.width, frame.height), frame.depth, 1)
     cv.CvtColor(frame, img, cv.CV_RGB2GRAY)
     return img
 
-def OCVClear(frame):
+def OCVClear(frame, color = (0, 0, 0)):
     """Clear a Frame"""
-    cv.Set(frame, (0, 0, 0));
+    cv.Set(frame, color);
 
 def OCVObjects(frame, storage, haar):
     """Read Objects from Frame"""
@@ -90,7 +90,7 @@ def OCVObjects(frame, storage, haar):
 
 def OCVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
     """Apply text to an image"""
-    img = cv.CreateImage((frame.width, frame.height), cv.IPL_DEPTH_8U, frame.nChannels)
+    img = cv.CreateImage((frame.width, frame.height), frame.depth, frame.nChannels)
 
     if font is None:
         font = cv.InitFont(cv.CV_FONT_HERSHEY_PLAIN, 0.9, 0.9, 0, 1, 1)
@@ -217,4 +217,106 @@ class OCVWindow:
     def render(self, frame):
         """Render the selected frame"""
         cv.ShowImage(self.name, frame)
+
+
+#
+# Class: OCVImage -- OpenCV Image OO
+#
+class OCVImage:
+
+    def __init__(self, frame = None, width = None, height = None, depth = cv.IPL_DEPTH_8U, channels = 3):
+        """Create a new instance from (frame is cloned if given)"""
+        if frame is None:
+          img = cv.CreateImage((width, height), depth, channels)
+        else:
+          img = OCVCloneImage(frame)
+
+        self.frame    = img
+        self.depth    = img.depth
+        self.channels = img.nChannels
+        self.width    = img.width
+        self.height   = img.height
+        self.size     = (self.width, self.height)
+        self.font     = None
+
+    def clone(self):
+        """Clone image and return new instance"""
+        return OCVImage(self.frame)
+
+    def clear(self, color = (0, 0, 0)):
+        """Clear frame to given color"""
+        cv.Set(self.frame, color);
+
+    def resize(self, size):
+        """Resize image to given dimension"""
+        self.frame  = OCVResizeImage(self.frame, size)
+        self.width  = img.width
+        self.height = img.height
+        self.size   = (self.width, self.height)
+
+    def crop(self, x, y, w, h):
+        """Crop image to given dimension/position"""
+        self.frame  = cv.GetSubRect(self.frame, (x, y, w, h))
+        self.width  = img.width
+        self.height = img.height
+        self.size   = (self.width, self.height)
+
+    def monochrome(self, depth = None):
+        """Convert image to grayscale/monochrome"""
+        if depth is None:
+            depth = self.depth
+
+        if self.channels != 1:
+            self.frame    = OCVCopyGrayscale(self.frame)
+            self.channels = self.frame.nChannels
+            self.depth    = self.frame.depth
+
+            return True
+
+        return False
+
+    def text(self, text, x = 0, y = 0, step = 15, font = None):
+        """Draw text on image (Font will be stored and used by default until changed)"""
+        if font is None:
+            if self.font is None:
+                font = self.font = cv.InitFont(cv.CV_FONT_HERSHEY_PLAIN, 0.9, 0.9, 0, 1, 1)
+        else:
+            self.font = font
+
+        self.frame = OCVText(self.frame, text, x, y, step, self.font)
+
+    def detect(self, storage, haar):
+        """Detect object(s) with given HAAR"""
+        return OCVObjects(self.frame, storage, haar)
+
+    def read(self, **ka):
+        return OCVReadText(**ka)
+
+    def save(self, path):
+        """Save the image to given path/filename"""
+        cv.SaveImage(path, self.frame);
+
+    def getSection(self, x, y, w, h, instance = False):
+        """Get a section of the image with given envelope (can return new OCVImage() instance"""
+        img = cv.GetSubRect(self.frame, (x, y, w, h))
+        if instance:
+            return OCVImage(img)
+
+        return img
+
+    def setThreshold(self, threshold, type, max = 255):
+        """Set threshold"""
+        cv.Threshold(self.frame, self.frame, threshold, max, type);
+
+    def setBrightness(self, brightness):
+        """Set brightness"""
+        self.setBrightnessContrast(brightness, 0)
+
+    def setContrast(self, contrast):
+        """Set contrast"""
+        self.setBrightnessContrast(0, contrast)
+
+    def setBrightnessContrast(self, brightness, contrast):
+        """Set brightness / contrast of given frame. Values from 0 to 200"""
+        OCVBrightnessContrast(self.frame, contrast, brightness)
 
