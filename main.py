@@ -19,128 +19,46 @@ from config import *
 # APPLICATION                                                                 #
 # ########################################################################### #
 
-# Class: Tracker
-class Tracker(OCVApplication):
+# Class: TrackerImage
+class TrackerImage(OCVImage):
 
-    def __init__(self, path, capture_id = 0):
-        self.path_img     = "%s/_output.jpg" % path
-        self.path_txt     = "%s/_output" % path
+    def __init__(self, frame, cap_settings, im_settings):
+        """Create and modify image"""
+        OCVImage.__init__(self, frame)
 
-        self.capture      = OCVCapture(capture_id)
+        if cap_settings["CaptureModify"]:
+            if cap_settings["CaptureBW"]:
+                self.mode(1)
 
-        self.win_result   = ResultsWindow()
-        self.win_settings = SettingsWindow()
+                try:
+                    self.setThreshold(im_settings["Threshold"], im_settings["Type"])
+                except:
+                    pass
 
-        OCVApplication.__init__(self)
+                if im_settings["Equalize"]:
+                    self.equalize()
 
-    def handle(self, frame, settings, bw):
-        """Handle Frame Manipulation"""
-        if bw:
-            img = OCVCopyGrayscale(frame)
-        else:
-            img = OCVCloneImage(frame)
 
-        if bw:
-            try:
-                cv.Threshold(img, img, settings["Threshold"], 255, settings["Type"]);
-            except:
-                pass
+            self.setBrightnessContrast(im_settings["Brightness"], im_settings["Contrast"])
 
-            if settings["Equalize"]:
-                cv.EqualizeHist(img, img)
-
-        OCVBrightnessContrast(img, settings["Contrast"], settings["Brightness"]);
-
-        return img
-
-    def run(self):
-        """Main Loop"""
-        capture_mode = 0
-        capture_modify = True
-        capture_bw = True
-
-        while 1:
-            # Capture Frame(s)
-            opts  = self.win_settings.settings
-            frame = self.capture.poll(opts["Flip"])
-            detect = 0
-
-            result = None
-            if frame is None:
-                break
-
-            # Keyboard Handling
-            k = cv.WaitKey(10)
-            if k == 113: # q
-                print "Exiting..."
-                break
-            elif k == 99: # c
-                print ">>> Detecting Text..."
-                detect = 1
-            elif k == 102: # f
-                print ">>> Detecting Object(s)..."
-                detect = 2
-            elif k == 116: # t
-                capture_mode += 1
-                if capture_mode > 1:
-                    capture_mode = 0
-
-                mode = ((["Modified", "Original"])[capture_mode])
-                print ">>> Mode: %d - %s" % (capture_mode, mode)
-            elif k == 109: # m
-                capture_modify = not capture_modify
-                if capture_modify:
-                    print ">>> Showing: Modified"
-                else:
-                    print ">>> Showing: Original"
-            elif k == 100: # d
-                capture_bw = not capture_bw
-                if capture_bw:
-                    print ">>> B&W: True"
-                else:
-                    print ">>> B&W: False"
-
-            if capture_modify:
-                img = self.handle(frame, opts, capture_bw)
-            else:
-                img = OCVCloneImage(frame)
-
-            if detect == 1:
-                result = self.detect_text(img)
-            elif detect == 2:
-                result = self.detect_objects(img, opts["Haarcascade"])
-
-            if capture_mode == 0:
-                self.win_settings.render(img)
-            elif capture_mode == 1:
-                hist = OCVHistogram(img)
-                self.win_settings.render(hist)
-
-            if result is not None:
-                self.win_result.render(result)
-
-        self.stop()
-
-    def detect_text(self, frame):
-        """Detect text in given frame, return image with result"""
-        img = cv.CreateImage((320, 240), cv.IPL_DEPTH_8U, frame.nChannels)
-
-        psm = self.win_settings.settings["Pagesegmode"]
-        data = OCVReadText(frame, self.path_img, self.path_txt, psm)
+    def detect_text(self, font, psm, path_img, path_txt):
+        """Detect text"""
+        img   = OCVCloneImage(self.frame)
+        data  = OCVReadText(self.frame, path_img, path_txt, psm)
         pprint.pprint(data)
         if data is None:
             data = "Empty..."
 
-        result = OCVText(img, data, 10, 15, 15, self.font, True)
+        result = OCVText(img, data, 10, 15, 15, font, True)
 
         cv.Copy(result, img)
 
         return img
 
-    def detect_objects(self, frame, haar):
-        """Detect objects in given frame, return image with result"""
-        img = OCVCloneImage(frame)
-        objects = OCVObjects(frame, self.storage, HAARS[haar])
+    def detect_objects(self, storage, haar):
+        """Detect objects"""
+        img     = OCVCloneImage(self.frame)
+        objects = OCVObjects(self.frame, storage, HAARS[haar])
 
         if objects:
             for ((x, y, w, h), n) in objects:
@@ -151,6 +69,93 @@ class Tracker(OCVApplication):
             return img
 
         return None
+
+# Class: Tracker
+class Tracker(OCVApplication):
+
+    def __init__(self, path, capture_id = 0):
+        """Create new Application"""
+        self.path_img     = "%s/_output.jpg" % path
+        self.path_txt     = "%s/_output" % path
+        self.win_result   = ResultsWindow()
+        self.win_settings = SettingsWindow()
+
+        # Other settings are handled by GUI, these are key bindings
+        self.settings = {
+            "PreviewMode"    : 0,
+            "CaptureModify"  : True,
+            "CaptureBW"      : True
+        }
+
+        OCVApplication.__init__(self, capture_id)
+
+    def handleKey(self, k):
+        """Handle Keyboard Input"""
+        if k == 113: # q
+            print "Exiting..."
+            return False
+        elif k == 99: # c
+            print ">>> Detecting Text..."
+            return "text"
+        elif k == 102: # f
+            print ">>> Detecting Object(s)..."
+            return "object"
+        elif k == 116: # t
+            self.settings["PreviewMode"] += 1
+            if self.settings["PreviewMode"] > 1:
+                self.settings["PreviewMode"] = 0
+
+            mode = ((["Capture", "Histogram"])[self.settings["PreviewMode"]])
+            print ">>> Mode: %d - %s" % (self.settings["PreviewMode"], mode)
+        elif k == 109: # m
+            self.settings["CaptureModify"] = not self.settings["CaptureModify"]
+            if self.settings["CaptureModify"]:
+                print ">>> Showing: Modified"
+            else:
+                print ">>> Showing: Original"
+        elif k == 98: # b
+            self.settings["CaptureBW"] = not self.settings["CaptureBW"]
+            if self.settings["CaptureBW"]:
+                print ">>> B&W: True"
+            else:
+                print ">>> B&W: False"
+
+        return True
+
+    def run(self):
+        """Main Loop"""
+
+        result = None
+        while 1:
+            # Get frame and key
+            frame, k = OCVApplication.run(self, self.win_settings.settings["Flip"])
+            if frame is None:
+                break
+
+            # Keyboard Handling
+            detect = self.handleKey(k)
+            if detect == False:
+                break
+
+            # Frame Handling
+            img = TrackerImage(frame, self.settings, self.win_settings.settings)
+
+            if detect == "text":
+                result = img.detect_text(self.font, self.win_settings.settings["Pagesegmode"], self.path_img, self.path_txt)
+            elif detect == "object":
+                result = img.detect_objects(self.storage, self.win_settings.settings["Haarcascade"])
+
+            # Output Handling
+            if self.settings["PreviewMode"] == 0:
+                self.win_settings.render(img.frame)
+            elif self.settings["PreviewMode"] == 1:
+                self.win_settings.render(img.getHistogram())
+
+            if result is not None:
+                self.win_result.render(result)
+
+        # Main loop break
+        self.stop()
 
 # ########################################################################### #
 # WINDOWS                                                                     #
@@ -199,7 +204,7 @@ Press q - To quit
       f - Capture Object
       t - Toggle Preview Mode (Capture/Histogram)
       m - Toggle Image Modification (On/Off)
-      d - Toggle B&W (Type/Threshold/Equalize)
+      b - Toggle B&W (Type/Threshold/Equalize)
 
 """
 

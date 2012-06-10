@@ -17,6 +17,55 @@ from config import *
 # FUNCTIONS                                                                   #
 # ########################################################################### #
 
+def OCVPILImage(src):
+    """Create OpenCV frame from a PIL source"""
+    pi = Image.open(src)
+    cv_im = cv.CreateImageHeader(pi.size, cv.IPL_DEPTH_8U, 1)
+    cv.SetData(cv_im, pi.tostring())
+    return cv_im
+
+def OCVNumpyArray(im):
+  """Get Numpy array from OpenCV frame"""
+  depth2dtype = {
+        cv.IPL_DEPTH_8U: 'uint8',
+        cv.IPL_DEPTH_8S: 'int8',
+        cv.IPL_DEPTH_16U: 'uint16',
+        cv.IPL_DEPTH_16S: 'int16',
+        cv.IPL_DEPTH_32S: 'int32',
+        cv.IPL_DEPTH_32F: 'float32',
+        cv.IPL_DEPTH_64F: 'float64',
+    }
+
+  arrdtype=im.depth
+  a = np.fromstring(
+         im.tostring(),
+         dtype=depth2dtype[im.depth],
+         count=im.width*im.height*im.nChannels)
+  a.shape = (im.height,im.width,im.nChannels)
+  return a
+
+def OCVNumpyImage(a):
+    """Get the OpenCV frame from Numpy array"""
+    dtype2depth = {
+        'uint8':   cv.IPL_DEPTH_8U,
+        'int8':    cv.IPL_DEPTH_8S,
+        'uint16':  cv.IPL_DEPTH_16U,
+        'int16':   cv.IPL_DEPTH_16S,
+        'int32':   cv.IPL_DEPTH_32S,
+        'float32': cv.IPL_DEPTH_32F,
+        'float64': cv.IPL_DEPTH_64F,
+    }
+    try:
+        nChannels = a.shape[2]
+    except:
+        nChannels = 1
+
+    cv_im = cv.CreateImageHeader((a.shape[1],a.shape[0]),
+                dtype2depth[str(a.dtype)],
+                nChannels)
+    cv.SetData(cv_im, a.tostring(), a.dtype.itemsize*nChannels*a.shape[1])
+    return cv_im
+
 def OCVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
     """Create a histogram of given frame"""
     if frame.nChannels != 1:
@@ -47,12 +96,12 @@ def OCVBrightnessContrast(frame, contrast, brightness):
     # (http://visca.com/ffactory/archives/5-99/msg00021.html)
     if contrast > 0:
         delta = 127. * contrast / 100
-        a = 255. / (255. - delta * 2)
-        b = a * (brightness - delta)
+        a     = 255. / (255. - delta * 2)
+        b     = a * (brightness - delta)
     else:
         delta = -128. * contrast / 100
-        a = (256. - delta * 2) / 255.
-        b = a * brightness + delta
+        a     = (256. - delta * 2) / 255
+        b     = a * brightness + delta
 
     cv.ConvertScale(frame, frame, a, b)
 
@@ -83,10 +132,6 @@ def OCVObjects(frame, storage, haar):
     cascade = cv.Load("%s/%s.%s" % (HAAR_PATH, haar, "xml"))
     objects = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, 0, (20, 20))
     return objects
-    #if objects:
-    #    for ((x, y, w, h), n) in objects:
-    #        return cv.GetSubRect(frame, (x, y, w, h))
-    #return None
 
 def OCVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
     """Apply text to an image"""
@@ -134,17 +179,27 @@ def OCVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
 #
 class OCVApplication:
 
-    def __init__(self, id=0):
+    def __init__(self, cap=None, id=0):
         """Create a new OpenCV Application"""
         self.storage      = cv.CreateMemStorage(id)
         self.font         = cv.InitFont(cv.CV_FONT_HERSHEY_PLAIN, 0.9, 0.9, 0, 1, 1)
 
-    def run(self):
-        """Start Application"""
-        pass
+        # Initialize capture device, if given
+        if cap is not None and isinstance(cap, int):
+            self.capture = OCVCapture(cap)
+
+    def run(self, flip = False, timeout = 10):
+        """Application Main Loop"""
+        if self.capture:
+            key   = cv.WaitKey(timeout)
+            frame = self.capture.poll(flip)
+
+            return (frame, key)
+
+        return False
 
     def stop(self):
-        """Stop Application"""
+        """Stop Application (Run when finished)"""
         try:
             cv.ClearMemStorage(self.storage)
         except:
@@ -224,12 +279,15 @@ class OCVWindow:
 #
 class OCVImage:
 
-    def __init__(self, frame = None, width = None, height = None, depth = cv.IPL_DEPTH_8U, channels = 3):
+    def __init__(self, frame = None, width = None, height = None, depth = cv.IPL_DEPTH_8U, channels = 3, noclone = False):
         """Create a new instance from (frame is cloned if given)"""
         if frame is None:
-          img = cv.CreateImage((width, height), depth, channels)
+            img = cv.CreateImage((width, height), depth, channels)
         else:
-          img = OCVCloneImage(frame)
+            if not noclone:
+                img = OCVCloneImage(frame)
+            else:
+                img = frame
 
         self.frame    = img
         self.depth    = img.depth
@@ -252,8 +310,11 @@ class OCVImage:
     # MANIPULATION
 
     def clear(self, color = (0, 0, 0)):
-        """Clear frame to given color"""
-        cv.Set(self.frame, color);
+        """Clear frame [to given color]"""
+        if color is not None:
+            cv.Set(self.frame, color);
+        else:
+            cv.SetZero(self.frame)
 
     def resize(self, size):
         """Resize image to given dimension"""
@@ -284,6 +345,12 @@ class OCVImage:
     def equalize(self):
         """Equalize frame"""
         cv.EqualizeHist(self.frame, self.frame)
+
+    def loc(self):
+        """Compute the Laplacian"""
+        dst = cv.CreateImage(cv.GetSize(self.frame), cv.IPL_DEPTH_16S, 3)
+        laplace = cv.Laplace(im, dst)
+        return (laplace, dst)
 
     # RENDER
 
@@ -331,6 +398,7 @@ class OCVImage:
         return OCVObjects(self.frame, storage, haar)
 
     def getDetectableText(self, **ka):
+        """Detect text"""
         return OCVReadText(**ka)
 
     def getSection(self, x, y, w, h, instance = False):
@@ -338,8 +406,21 @@ class OCVImage:
         img = cv.GetSubRect(self.frame, (x, y, w, h))
         if instance:
             return OCVImage(img)
-
         return img
+
+    def getMat(self):
+        """Get Mat array"""
+        return cv.CreateMat(self.width, self.height, cv.CV_32FC1)
+
+    def getFeatures(self, count = 10, quality = None, dist = 1.0, use_harris = True):
+        """Get good features to track"""
+        tmp     = cv.CreateImage((self.width, self.height), self.depth, self.channels)
+        results = cv.GoodFeaturesToTrack(img, self.frame, tmp, count, quality, dist, use_harris)
+        return (tmp, results)
+
+    def getHistogram(self, ranges = [[0, 256]], hist_size = 64):
+        """Get image histogram"""
+        return OCVHistogram(self.frame, ranges, hist_size)
 
     # SETTERS
 
