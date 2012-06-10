@@ -10,6 +10,7 @@
 # Dependencies
 import cv
 import pprint
+import argparse
 
 # Locals
 from ocv import *
@@ -73,7 +74,7 @@ class TrackerImage(OCVImage):
 # Class: Tracker
 class Tracker(OCVApplication):
 
-    def __init__(self, path, capture_id = 0):
+    def __init__(self, path, capture_id, capture_width, capture_height):
         """Create new Application"""
         self.path_img     = "%s/_output.jpg" % path
         self.path_txt     = "%s/_output" % path
@@ -87,7 +88,7 @@ class Tracker(OCVApplication):
             "CaptureBW"      : True
         }
 
-        OCVApplication.__init__(self, capture_id)
+        OCVApplication.__init__(self, 0, capture_id, capture_width, capture_height)
 
     def handleKey(self, k):
         """Handle Keyboard Input"""
@@ -196,7 +197,35 @@ class SettingsWindow(OCVWindow):
 # ########################################################################### #
 
 if __name__ == "__main__":
-    app = Tracker(DEFAULT_TMP, DEFAULT_DEV)
+    cap_id      = DEFAULT_DEV
+    cap_width   = DEFAULT_DEV_WIDTH
+    cap_height  = DEFAULT_DEV_HEIGHT
+
+    parser = argparse.ArgumentParser(description='PyOCV Example Help')
+    parser.add_argument('--device', action='store', type=int,
+                       help='the capture device id (default: %d)' % cap_id)
+    parser.add_argument('--width', action='store', type=int,
+                       help='the capture width in pixels (default: %d)' % cap_width)
+    parser.add_argument('--height', action='store', type=int,
+                       help='the capture height in pixels (default: %d)' % cap_height)
+
+    args = parser.parse_args()
+    try:
+        cap_id = int(args.device)
+    except:
+        pass
+
+    try:
+        cap_width = int(args.width)
+    except:
+        pass
+
+    try:
+        cap_height = int(args.height)
+    except:
+        pass
+
+    app = Tracker(DEFAULT_TMP, cap_id, cap_width, cap_height)
     print """PyOCV Example
 
 Press q - To quit

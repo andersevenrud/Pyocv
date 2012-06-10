@@ -179,14 +179,14 @@ def OCVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
 #
 class OCVApplication:
 
-    def __init__(self, cap=None, id=0):
+    def __init__(self, id = 0, cap=None, width=None, height=None):
         """Create a new OpenCV Application"""
         self.storage      = cv.CreateMemStorage(id)
         self.font         = cv.InitFont(cv.CV_FONT_HERSHEY_PLAIN, 0.9, 0.9, 0, 1, 1)
 
         # Initialize capture device, if given
         if cap is not None and isinstance(cap, int):
-            self.capture = OCVCapture(cap)
+            self.capture = OCVCapture(cap, width, height)
 
     def run(self, flip = False, timeout = 10):
         """Application Main Loop"""
@@ -210,7 +210,7 @@ class OCVApplication:
 #
 class OCVCapture:
 
-    def __init__(self, id=0, width=DEFAULT_DEV_WIDTH, height=DEFAULT_DEV_HEIGHT):
+    def __init__(self, id=0, width=None, height=None):
         """Create a new OpenCV Capture Device"""
         self.capture = cv.CreateCameraCapture(id)
         cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FRAME_WIDTH, width)
