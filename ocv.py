@@ -13,6 +13,11 @@ import subprocess
 
 from config import *
 
+# ########################################################################### #
+# MISC                                                                        #
+# ########################################################################### #
+
+# OpenVC Capture Device properties
 OCVCaptureProperties = {
     cv.CV_CAP_PROP_POS_MSEC       : "POS_MSEC",
     cv.CV_CAP_PROP_POS_FRAMES     : "POS_FRAMES",
@@ -113,9 +118,11 @@ def OCVHistogram(frame, ranges = [[0, 256]], hist_size = 64):
     return hist_image
 
 def OCVBrightnessContrast(frame, contrast, brightness):
-    """Set brightness / contrast of given frame. Values from 0 to 200"""
-    # The algorithm is by Werner D. Streidt
-    # (http://visca.com/ffactory/archives/5-99/msg00021.html)
+    """ Set brightness / contrast of given frame. Values from 0 to 200
+
+        The algorithm is by Werner D. Streidt
+        (http://visca.com/ffactory/archives/5-99/msg00021.html)
+    """
     if contrast > 0:
         delta = 127. * contrast / 100
         a     = 255. / (255. - delta * 2)
@@ -214,10 +221,10 @@ class OCVApplication:
         if cap is not None and isinstance(cap, int):
             self.capture = OCVCapture(cap, width, height)
 
-    def run(self, flip = False, timeout = 10):
+    def run(self, flip = False, delay = 10):
         """Application Main Loop"""
         if self.capture:
-            key   = cv.WaitKey(timeout)
+            key   = cv.WaitKey(delay)
             frame = self.capture.poll(flip)
 
             return (frame, key)
@@ -237,7 +244,10 @@ class OCVApplication:
 class OCVCapture:
 
     def __init__(self, id=0, width=None, height=None):
-        """Create a new OpenCV Capture Device"""
+        """ Create a new OpenCV Capture Device
+            - if 'id' is integer a 'Camera Device' is used
+            - if 'id' is string a 'Physical Video File' is used
+        """
         if type(id) is str:
             self.capture = cv.CaptureFromFile(id)
         else:
@@ -295,8 +305,11 @@ class OCVCapture:
 #
 class OCVWindow:
 
-    def __init__(self, name, x = -1, y = -1, w = None, h = None):
-        """Create OpenCV Window"""
+    def __init__(self, name, x = None, y = None, w = None, h = None):
+        """ Create OpenCV Window.
+            - Auto-resize if now size is given.
+            - Auto-position to 0x0 if no pos given
+        """
 
         if w is not None and h is not None:
             cv.NamedWindow(name, 0)
@@ -304,7 +317,7 @@ class OCVWindow:
         else:
             cv.NamedWindow(name, cv.CV_WINDOW_AUTOSIZE)
 
-        if x != -1 and y != -1:
+        if x is not None and y is not None:
             cv.MoveWindow(name, x, y)
 
         self.name     = name
@@ -346,7 +359,11 @@ class OCVWindow:
 class OCVImage:
 
     def __init__(self, frame = None, width = None, height = None, depth = cv.IPL_DEPTH_8U, channels = 3, noclone = False):
-        """Create a new instance from (frame is cloned if given)"""
+        """ Create a new instance from
+            - Dimensions and properties only used if no frame is given
+            - The given frame will be cloned unless 'noclone' is set
+        """
+
         if frame is None:
             img = cv.CreateImage((width, height), depth, channels)
         else:
@@ -510,7 +527,9 @@ class OCVImage:
         """Set brightness / contrast of given frame. Values from 0 to 200"""
         OCVBrightnessContrast(self.frame, contrast, brightness)
 
+#
 # Class: OCVVideo -- OpenCV Video Class
+#
 class OCVVideo:
 
     def __init__(self, path, size, fourcc = cv.CV_FOURCC('M','J','P','G'), fps=30, color=1):
