@@ -13,6 +13,28 @@ import subprocess
 
 from config import *
 
+OCVCaptureProperties = {
+    cv.CV_CAP_PROP_POS_MSEC       : "POS_MSEC",
+    cv.CV_CAP_PROP_POS_FRAMES     : "POS_FRAMES",
+    cv.CV_CAP_PROP_POS_AVI_RATIO  : "POS_AVI_RATIO",
+    cv.CV_CAP_PROP_FRAME_WIDTH    : "POS_FRAME_WIDTH",
+    cv.CV_CAP_PROP_FRAME_HEIGHT   : "POS_FRAME_HEIGHT",
+    cv.CV_CAP_PROP_FPS            : "FPS",
+    cv.CV_CAP_PROP_FOURCC         : "FOURCC",
+    cv.CV_CAP_PROP_FRAME_COUNT    : "FRAME_COUNT",
+    cv.CV_CAP_PROP_FORMAT         : "FORMAT",
+    cv.CV_CAP_PROP_MODE           : "MODE",
+    cv.CV_CAP_PROP_BRIGHTNESS     : "BRIGHTNESS",
+    cv.CV_CAP_PROP_CONTRAST       : "CONTRAST",
+    cv.CV_CAP_PROP_SATURATION     : "SATURATION",
+    cv.CV_CAP_PROP_HUE            : "HUE",
+    cv.CV_CAP_PROP_GAIN           : "GAIN",
+    cv.CV_CAP_PROP_EXPOSURE       : "EXPOSURE",
+    cv.CV_CAP_PROP_CONVERT_RGB    : "CONVERT_RGB"
+    #cv.CV_CAP_PROP_WHITE_BALANCE
+    #cv.CV_CAP_PROP_RECTIFICATION
+}
+
 # ########################################################################### #
 # FUNCTIONS                                                                   #
 # ########################################################################### #
@@ -216,10 +238,23 @@ class OCVCapture:
 
     def __init__(self, id=0, width=None, height=None):
         """Create a new OpenCV Capture Device"""
-        self.capture = cv.CreateCameraCapture(id)
-        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FRAME_WIDTH, width)
-        cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FRAME_HEIGHT, height)
+        if type(id) is str:
+            self.capture = cv.CaptureFromFile(id)
+        else:
+            self.capture = cv.CreateCameraCapture(id)
+            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FRAME_WIDTH, width)
+            cv.SetCaptureProperty(self.capture, cv.CV_CAP_PROP_FRAME_HEIGHT, height)
 
+    def __del__(self):
+        """Destroy instance"""
+        try:
+            cv.ReleaseCapture(self.capture)
+        except:
+            pass
+
+    def grab(self):
+        """Grab a frame from capture device"""
+        return cv.GrabFrame(self.capture)
 
     def poll(self, flip = False):
         """Get a frame from device"""
@@ -227,6 +262,33 @@ class OCVCapture:
         if flip:
             cv.Flip(frame, None, 1)
         return frame
+
+    def properties(self, props = None):
+        """Get/Set a list of capture device properties"""
+        if type(props) is dict:
+            for k, v in props:
+                self.property(k, v)
+        else:
+            result = {}
+            if props is None:
+                for k in OCVCaptureProperties.keys():
+                    result[OCVCaptureProperties[k]] = self.property(k)
+            else:
+                for k in props:
+                    result[OCVCaptureProperties[k]] = self.property(k)
+
+            return result
+
+        return None
+
+    def property(self, key, val = None):
+        """Get/Set capture device property"""
+        if val is None:
+            return cv.GetCaptureProperty(self.capture, key)
+        else:
+            cv.SetCaptureProperty(self.capture, key, val)
+
+        return None
 
 #
 # Class: CVWindow -- OpenCV Window Abstraction
@@ -300,6 +362,10 @@ class OCVImage:
         self.height   = img.height
         self.size     = (self.width, self.height)
         self.font     = None
+
+    def __del__(self):
+        """Destroy Instance"""
+        pass
 
     # MISC
 
@@ -443,4 +509,22 @@ class OCVImage:
     def setBrightnessContrast(self, brightness, contrast):
         """Set brightness / contrast of given frame. Values from 0 to 200"""
         OCVBrightnessContrast(self.frame, contrast, brightness)
+
+# Class: OCVVideo -- OpenCV Video Class
+class OCVVideo:
+
+    def __init__(self, path, size, fourcc = cv.CV_FOURCC('M','J','P','G'), fps=30, color=1):
+        """Create a new OpenCV Instance"""
+        self.writer = cv.CreateVideoWriter(path, fourcc, fps, size, color)
+
+    def __del__(self):
+        """Destroy instance"""
+        try:
+            cv.ReleaseVideoWriter(self.writer)
+        except:
+            pass
+
+    def write(self, frame):
+        """Write a OpenCV image frame to the video"""
+        cv.WriteFrame(self.writer, frame)
 

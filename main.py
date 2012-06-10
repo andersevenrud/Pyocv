@@ -125,6 +125,8 @@ class Tracker(OCVApplication):
     def run(self):
         """Main Loop"""
 
+        pprint.pprint(self.capture.properties())
+
         result = None
         while 1:
             # Get frame and key
