@@ -129,7 +129,7 @@ def OCVClear(frame, color = (0, 0, 0)):
 
 def OCVObjects(frame, storage, haar):
     """Read Objects from Frame"""
-    cascade = cv.Load("%s/%s.%s" % (HAAR_PATH, haar, "xml"))
+    cascade = cv.Load(haar)
     objects = cv.HaarDetectObjects(frame, cascade, storage, 1.2, 2, 0, (20, 20))
     return objects
 
@@ -151,7 +151,7 @@ def OCVText(frame, text, x = 0, y = 0, step = 15, font = None, clear = False):
 
     return img
 
-def OCVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
+def OCVReadText(frame, name, out, psm = 3, lang = None):
     """Read Text From Image"""
     data = None
 
@@ -160,6 +160,10 @@ def OCVReadText(frame, name, out, psm = 3, lang = DEFAULT_LANGUAGE):
     if os.path.isfile(name):
         # Detect text
         args = [TESSERACT_BIN, '-psm', str(psm), str(name), str(out)]
+        if lang is not None:
+            args.append("-lang")
+            args.append(lang)
+
         print "Executing: %s" % (((" ").join(args)))
         cmdout = subprocess.Popen(args, stderr=subprocess.STDOUT, stdout=subprocess.PIPE).communicate()[0]
         if os.path.isfile(out + ".txt"):

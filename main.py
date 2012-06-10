@@ -59,8 +59,7 @@ class TrackerImage(OCVImage):
     def detect_objects(self, storage, haar):
         """Detect objects"""
         img     = OCVCloneImage(self.frame)
-        objects = OCVObjects(self.frame, storage, HAARS[haar])
-
+        objects = OCVObjects(self.frame, storage, ("%s/%s.%s" % (HAAR_PATH, HAARS[haar], "xml")))
         if objects:
             for ((x, y, w, h), n) in objects:
                 tl = (x + int(w*0.1), y + int(h*0.07))
